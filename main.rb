@@ -1,5 +1,4 @@
 # be.gs url shortening service
-# $Id$
 #
 # (c) Copyright 2010. Omachonu Ogali <oogali@idlepattern.com>
 # All rights reserved.
@@ -164,8 +163,12 @@ get '/' do
   haml :index
 end
 
+get '/favicon.ico' do
+  status 404 'no icon here!'
+end
+
 get '/source' do
-  send_file('main.rb')
+  redirect 'http://github.com/oogali/be.gs'
 end
 
 get '/shorten' do
