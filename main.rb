@@ -66,7 +66,7 @@ def ping(url, limit = 5)
     when Net::HTTPSuccess then
       reassemble_url(uri)
     when Net::HTTPRedirection then
-      fetch(resp['location'], limit - 1)
+      ping(resp['location'], limit - 1)
   end
 end
 
@@ -76,11 +76,12 @@ def shorten(url)
   if u then
     # open tokyocabinet database
     db = RDB::new()
-    if !db.open('localhost', '19781') then
+    if !db.open('127.0.0.1', 19781) then
       halt 500, 'could not connect to database: ' + db.errmsg(db.ecode)
     end
 
     # does this url exist? if so, return pre-existing key, otherwise store it
+    key = db.get(u)
     if !db.has_key?(u) then
       i = 0
       power = 2
@@ -90,7 +91,7 @@ def shorten(url)
       # if we go through 10 rounds of rand(), increase the power
       # rinse and repeat until we find a random number not in use
       key = rand(base ** power).to_s(base)
-      while !db.has_key?(key) do
+      while db.has_key?(key) do
         if i >= 10 then
           i = 0
           power += 1
@@ -106,16 +107,14 @@ def shorten(url)
       db.put(u, key)
       db.put(key, u)
       db.close()
-
-      key
     else
       # our url is already in the database, do nothing
       # but close the database to avoid concurrency issues
       key = db.get(u)
       db.close()
-
-      key
     end
+
+    key
   else
     false
   end
@@ -137,7 +136,7 @@ end
 def expand(key)
   # create new db instance and open database
   db = RDB::new()
-  if !db.open('localhost', '19781') then
+  if !db.open('127.0.0.1', 19781) then
     halt 500, 'could not connect to database: ' + db.errmsg(db.ecode)
   end
 
