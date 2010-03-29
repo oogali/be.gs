@@ -164,7 +164,7 @@ get '/' do
 end
 
 get '/favicon.ico' do
-  status 404 'no icon here!'
+  status 404, 'no icon here!'
 end
 
 get '/source' do
