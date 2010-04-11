@@ -33,7 +33,7 @@ require 'tokyotyrant'
 include TokyoTyrant
 
 def reassemble_url(uri)
-  uri.scheme + '://' + uri.host + ((uri.scheme == 'http' and uri.port != 80) or (uri.scheme == 'https' and uri.port != 443) ? (':' + uri.port.to_s) : '') + uri.path
+  uri.scheme + '://' + uri.host + ((uri.scheme == 'http' and uri.port != 80) or (uri.scheme == 'https' and uri.port != 443) ? (':' + uri.port.to_s) : '') + uri.path + (uri.query.nil? ? '' : ('?' + uri.query)) + (uri.fragment.nil? ? '' : ('#' + uri.fragment))
 end
 
 def ping(url, limit = 5)
