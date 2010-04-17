@@ -33,10 +33,12 @@ require 'tokyotyrant'
 include TokyoTyrant
 
 def reassemble_url(uri)
+  # let's not forget: scheme, host, port, path, query, fragment
   uri.scheme + '://' + uri.host + ((uri.scheme == 'http' and uri.port != 80) or (uri.scheme == 'https' and uri.port != 443) ? (':' + uri.port.to_s) : '') + uri.path + (uri.query.nil? ? '' : ('?' + uri.query)) + (uri.fragment.nil? ? '' : ('#' + uri.fragment))
 end
 
 def ping(url, limit = 5)
+  # we've reached the end of our rope
   if limit == 0 then
     false
   end
@@ -73,14 +75,13 @@ def shorten(url)
   # make sure we have a valid url before entering key blocks
   u = ping(url)
   if u then
-    # open tokyocabinet database
+    # open tokyocabinet database by way of tokyotyrant
     db = RDB::new()
     if !db.open('127.0.0.1', 19781) then
       halt 500, 'could not connect to database: ' + db.errmsg(db.ecode)
     end
 
     # does this url exist? if so, return pre-existing key, otherwise store it
-    key = db.get(u)
     if !db.has_key?(u) then
       i = 0
       power = 2
@@ -120,10 +121,12 @@ def shorten(url)
 end
 
 def do_shorten(url)
+  # blank url? goodbye
   if url.nil? or url.empty? then
     redirect '/'
   end
 
+  # shorten or die
   key = shorten(url)
   if !key then
     halt 500, 'we don\'t like your url'
