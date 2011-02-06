@@ -119,6 +119,11 @@ module Begs
       @redis.set key, val
     end
 
+    def incr(key)
+      @redis.ping rescue self.connect
+      @redis.incr key
+    end
+
     helpers do
       def do_shorten(url, rkey = nil)
         key = self.shorten url, rkey
@@ -127,7 +132,7 @@ module Begs
       end
 
       def do_expand(key)
-        '/' unless !key and !key.empty?
+        'http://be.gs/?lol=whut' unless !key and !key.empty?
 
         url = self.expand key
         if !url
@@ -140,7 +145,7 @@ module Begs
 
       def inc_hit_count(key)
         k = "begs::url:#{key}"
-        @redis.incr("#{k}.count") unless !@redis.exists k rescue false
+        self.incr("#{k}.count") unless !self.exists k rescue false
       end
     end
 
@@ -153,7 +158,7 @@ module Begs
     end
 
     get '/shorten/*' do
-      do_shorten params['splat'], params[:key]
+      do_shorten request.fullpath[1..-1].split('/')[1..-1].join('/')
     end
 
     post '/shorten' do
