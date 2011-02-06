@@ -1,8 +1,8 @@
-require 'rubygems'
 require 'sinatra'
 require 'haml'
 require 'redis'
 require 'json'
+require 'net/http'
 
 module Begs
   class Application < Sinatra::Base
@@ -15,8 +15,14 @@ module Begs
 
     def initialize
       super #
+      self.connect
+    end
+
+    def connect
+      @redis.quit unless !@redis rescue nil
 
       @redis = Redis.new
+      @redis.ping
     end
 
     def ping(url, limit = 5)
@@ -54,7 +60,7 @@ module Begs
 
       # this is scary, we could potentially loop for a very long time
       key = gen_rand_key(power)
-      while @redis.exists(key) do
+      while self.exists(key) do
         if i >= 10
           i = 0
           power += 1
@@ -70,32 +76,47 @@ module Begs
     def shorten(url, rkey = nil)
       nil unless url
 
-      key = @redis.get('begs::url:' + url) rescue nil
+      key = self.get('begs::url:' + url) rescue nil
       return key.split(/:/)[3] unless key.nil?
 
       u = self.ping(url)
       nil unless u
 
-      key = @redis.get('begs::url:' + u) rescue nil
+      key = self.get('begs::url:' + u) rescue nil
       if !key
         if rkey and rkey.length < 32
           rkey = "begs::url:#{rkey}"
-          key = rkey unless @redis.exists rkey rescue nil
+          key = rkey unless self.exists rkey rescue nil
         end
 
         key = self.new_key unless key
 
         return nil unless key
-        @redis.set "#{key}", ({ 'url' => u, 'created' => Time.now.to_i }).to_json
-        @redis.set "#{key}.count", 0
-        @redis.set "begs::url:#{u}", key
+        self.set "#{key}", ({ 'url' => u, 'created' => Time.now.to_i }).to_json
+        self.set "#{key}.count", 0
+        self.set "begs::url:#{u}", key
       end
 
       key.split(/:/)[3]
     end
 
     def expand(key)
-      @redis.get "begs::url:#{key}" rescue nil
+      self.get "begs::url:#{key}" rescue nil
+    end
+
+    def exists(key)
+      @redis.ping rescue self.connect
+      @redis.exists key
+    end
+
+    def get(key)
+      @redis.ping rescue self.connect
+      @redis.get key
+    end
+
+    def set(key, val)
+      @redis.ping rescue self.connect
+      @redis.set key, val
     end
 
     helpers do
