@@ -56,11 +56,11 @@ module Begs
         return nil
       end
 
-			# enable ssl because silly Net::HTTP won't do it for us
-			h.use_ssl = (uri.scheme == 'https')
+      # enable ssl because silly Net::HTTP won't do it for us
+      h.use_ssl = (uri.scheme == 'https')
 
-			headers = { 'User-Agent' => 'be.gs/20110206 (be.gs url shortener; +http://be.gs)' }
-			resp = h.head uri.request_uri, headers rescue nil
+      headers = { 'User-Agent' => 'be.gs/20110206 (be.gs url shortener; +http://be.gs)' }
+      resp = h.head uri.request_uri, headers rescue nil
 
       if !resp
         @log.error "Could not do a request for #{uri.scheme}://#{uri.host}:#{uri.port}#{uri.request_uri}"
