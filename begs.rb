@@ -129,23 +129,27 @@ module Begs
       self.get "begs::url:#{key}" rescue nil
     end
 
-    def exists(key)
+    def reconnect_if_needed
       @redis.ping rescue self.connect
+    end
+
+    def exists(key)
+      self.reconnect_if_needed
       @redis.exists key
     end
 
     def get(key)
-      @redis.ping rescue self.connect
+      self.reconnect_if_needed
       @redis.get key
     end
 
     def set(key, val)
-      @redis.ping rescue self.connect
+      self.reconnect_if_needed
       @redis.set key, val
     end
 
     def incr(key)
-      @redis.ping rescue self.connect
+      self.reconnect_if_needed
       @redis.incr key
     end
 
@@ -165,7 +169,7 @@ module Begs
           nil
         end
 
-        (JSON.parse url)['url']
+        (JSON.parse url)['url'] rescue 'http://be.gs/?lol=whut'
       end
 
       def inc_hit_count(key)
