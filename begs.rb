@@ -1,12 +1,15 @@
+require 'rubygems'
 require 'sinatra'
 require 'haml'
 require 'redis'
 require 'json'
-require 'net/http'
+require 'net/https'
+require 'logger'
 
 module Begs
   class Application < Sinatra::Base
     @redis = nil
+    @log = nil
 
     def Begs.reassemble_url(uri)
       nil unless uri
@@ -15,6 +18,8 @@ module Begs
 
     def initialize
       super #
+      @log = Logger.new(STDERR)
+      @log.level = Logger::INFO
       self.connect
     end
 
@@ -23,30 +28,50 @@ module Begs
 
       @redis = Redis.new
       @redis.ping
+      @log.info("Connected to redis")
     end
 
     def ping(url, limit = 5)
+      @log.debug "Entered ping for #{url}"
+
       # we've exhausted 5 levels of redirection
-      return nil unless limit > 0
+      if limit <= 0
+        @log.error "Redirection limit reached on #{url}"
+        return nil
+      end
 
       # prepend http:// if no scheme given, and parse URL
       uri = URI.parse((/^http[s]*\:\/\//.match(url) ? '' : 'http://') + url) rescue nil
-      return nil unless uri
+      if !uri
+        @log.error "Invalid URL: #{url}"
+        return nil
+      end
 
       # don't try to loop on ourselves
       nil unless uri.host != 'be.gs'
 
-      h = Net::HTTP.new(uri.host, uri.port) rescue nil
-      nil unless h
+      h = Net::HTTP.new(uri.host, uri.port)
+      if !h
+        @log.error "Could not create HTTP object for #{uri.host}:#{uri.port}"
+        return nil
+      end
 
-      resp = h.head uri.request_uri rescue nil
-      nil unless resp
+			# enable ssl because silly Net::HTTP won't do it for us
+			h.use_ssl = (uri.scheme == 'https')
+
+			headers = { 'User-Agent' => 'be.gs/20110206 (be.gs url shortener; +http://be.gs)' }
+			resp = h.head uri.request_uri, headers rescue nil
+
+      if !resp
+        @log.error "Could not do a request for #{uri.scheme}://#{uri.host}:#{uri.port}#{uri.request_uri}"
+        return nil
+      end
 
       case resp
         when Net::HTTPClientError, Net::HTTPSuccess then
           Begs.reassemble_url(uri)
         when Net::HTTPRedirection then
-          nil unless ping(resp['location'], limit - 1)
+          ping(resp['location'], limit - 1)
       end
     end
 
@@ -80,7 +105,7 @@ module Begs
       return key.split(/:/)[3] unless key.nil?
 
       u = self.ping(url)
-      nil unless u
+      return nil unless u
 
       key = self.get('begs::url:' + u) rescue nil
       if !key
@@ -178,8 +203,8 @@ module Begs
     end
 
     get '/*' do
-      inc_hit_count(params['splat'][0])
-      redirect do_expand(params['splat'][0])
+      inc_hit_count(params['splat'])
+      redirect do_expand(params['splat'])
     end
   end
 end
