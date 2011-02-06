@@ -6,10 +6,10 @@ set :root, working
 set :haml, :format => :html5
 disable :run
 
-require working + '/appname'
+require working + '/begs'
 
 log = File.new('sinatra.log', 'a')
 $stdout.reopen(log)
 $stderr.reopen(log)
 
-run AppName::Application
+run Begs::Application
