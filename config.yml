@@ -1,0 +1,12 @@
+---
+chdir: /home/oogali/be.gs
+address: 0.0.0.0
+port: 19001
+pid: /home/oogali/be.gs/server.pid
+rackup: /home/oogali/be.gs/config.ru
+log: /home/oogali/be.gs/server.log
+max_conns: 128
+timeout: 30
+max_persistent_conns: 16
+servers: 1
+daemonize: true
