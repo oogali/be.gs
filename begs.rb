@@ -32,7 +32,8 @@ module Begs
     end
 
     def ping(url, limit = 5)
-      url = URI.decode(url)
+      url = URI.decode(url) rescue nil
+      nil unless url
       @log.debug "Entered ping for #{url}"
 
       # we've exhausted 5 levels of redirection
