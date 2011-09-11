@@ -1,0 +1,12 @@
+---
+chdir: /path/to/be.gs
+address: 127.0.0.1
+port: 4567
+pid: /path/to/be.gs/server.pid
+rackup: /path/to/be.gs/config.ru
+log: /path/to/be.gs/server.log
+max_conns: 128
+timeout: 30
+max_persistent_conns: 16
+servers: 1
+daemonize: true

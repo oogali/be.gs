@@ -5,11 +5,13 @@ require 'redis'
 require 'json'
 require 'net/https'
 require 'logger'
+require 'yaml'
 
 module Begs
   class Application < Sinatra::Base
-    @redis = nil
-    @log = nil
+    @redis
+    @log
+    @opts
 
     def Begs.reassemble_url(uri)
       nil unless uri
@@ -20,6 +22,9 @@ module Begs
       super #
       @log = Logger.new(STDERR)
       @log.level = Logger::INFO
+
+      @opts = {}
+      @opts.merge! YAML.load_file('/home/missnglnk/www/be.gs/begs.yml')
       self.connect
     end
 
@@ -27,6 +32,11 @@ module Begs
       @redis.quit unless !@redis rescue nil
 
       @redis = Redis.new
+      @log.info @opts.inspect
+      if @opts[:redis] and @opts[:redis][:passwd]
+        @redis.auth @opts[:redis][:passwd]
+      end
+
       @redis.ping
       @log.info("Connected to redis")
     end
@@ -53,6 +63,7 @@ module Begs
       nil unless uri.host != 'be.gs'
 
       h = Net::HTTP.new(uri.host, uri.port)
+      h.read_timeout = 5
       if !h
         @log.error "Could not create HTTP object for #{uri.host}:#{uri.port}"
         return nil
@@ -62,7 +73,9 @@ module Begs
       h.use_ssl = (uri.scheme == 'https')
 
       headers = { 'User-Agent' => 'be.gs/20110206 (be.gs url shortener; +http://be.gs)' }
-      resp = h.head uri.request_uri, headers rescue nil
+      req = Net::HTTP::Get.new(uri.request_uri, headers)
+      req.set_range 0, 2048
+      resp = h.request req
 
       if !resp
         @log.error "Could not do a request for #{uri.scheme}://#{uri.host}:#{uri.port}#{uri.request_uri}"
@@ -88,7 +101,7 @@ module Begs
       # this is scary, we could potentially loop for a very long time
       key = gen_rand_key(power)
       while self.exists(key) do
-        if i >= 10
+        if i >= 20
           i = 0
           power += 1
         end
@@ -118,7 +131,11 @@ module Begs
 
         key = self.new_key unless key
 
-        return nil unless key
+        if !key
+          @log.error "Could not acquire a new key"
+          return nil
+        end
+
         self.set "#{key}", ({ 'url' => u, 'created' => Time.now.to_i }).to_json
         self.set "#{key}.count", 0
         self.set "begs::url:#{u}", key
@@ -181,7 +198,26 @@ module Begs
     end
 
     get '/' do
+      content_type 'text/html'
       haml :index
+    end
+
+    get %r{/css/(default|reset|formalize).css} do |css|
+      content_type 'text/css'
+      sass css.to_sym
+    end
+
+    get %r{/img/(.*)} do |img|
+      fn = File.join 'public/img/', img
+      return 'URL not found' if !File.exists? fn
+      File.open(fn).read
+    end
+
+    get %r{/js/(.*).js} do |js|
+      fn = File.join 'public/js/', "#{js}.js"
+      return 'URL not found' if !File.exists? fn
+      content_type 'application/javascript'
+      File.open(fn).read
     end
 
     get '/shorten' do

@@ -1,14 +1,4 @@
-%html
-  %head
-    %title= 'be.gs'
-  %body
-    #header
-      %h2= 'be.gs'
-      %h4= 'url shortening'
-    #to_shorten
-      %form{:method => 'POST', :action => '/shorten'}
-        %input{:type => 'next', :id => 'url', :name => 'url', :size => 50}
-        %input{:type => 'submit', :id => 'btnshorten', :value => 'shorten!'}
-    #footer
-      &copy; copyright 2010-2011. omachonu ogali.
-      %a{:href => '/source'}= '[ view source ]'
+#to_shorten
+  %form{:method => 'POST', :action => '/shorten'}
+    %input{ :type => 'text', :id => 'url', :name => 'url', :size => 60, :placeholder => 'e.g. http://www.domain.com/with/a/really/long/url ...' }
+    %input{ :type => 'submit', :id => 'btnshorten', :value => 'shorten!' }

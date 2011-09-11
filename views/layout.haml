@@ -1,0 +1,32 @@
+%html
+  %head
+    %title= 'be.gs'
+    %link{ :href => '/css/reset.css', :rel => 'stylesheet' }
+    %link{ :href => '/css/default.css', :rel => 'stylesheet' }
+    %link{ :href => '/css/formalize.css', :rel => 'stylesheet' }
+    %script{ :src => '/js/jquery-1.6.2.min.js' }
+    %script{ :src => '/js/jquery.formalize.min.js' }
+  %body
+    #container
+      #header
+        %h1= 'be.gs'
+        %h2
+          %a{ :href => "javascript:window.location.href='http://be.gs/shorten?url=' + encodeURIComponent(window.location.href)" }= 'simple url shortening'
+
+      =yield
+
+      #footer
+        %h6
+          &copy; copyright 2010-2011. omachonu ogali.
+          %a{ :href => '/source' }= '[ view source ]'
+          %br
+          %br
+
+          #credits
+            powered by
+            %a{ :href => 'http://ruby-lang.org' }= 'ruby'
+            %a{ :href => 'http://www.sinatrarb.com' }= 'sinatra'
+            %a{ :href => 'http://redis.io' }= 'redis'
+            %a{ :href => 'http://www.varnish-cache.org' }= 'varnish'
+            and
+            %a{ :href => 'http://www.idlepattern.com' }= 'idle pattern'
