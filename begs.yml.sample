@@ -1,0 +1,3 @@
+--- 
+:redis: 
+  :passwd: MYSUPERSECRETREDISPASSWORD
