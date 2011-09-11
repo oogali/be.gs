@@ -24,7 +24,7 @@ module Begs
       @log.level = Logger::INFO
 
       @opts = {}
-      @opts.merge! YAML.load_file('/home/missnglnk/www/be.gs/begs.yml')
+      @opts.merge! YAML.load_file('begs.yml') rescue nil
       self.connect
     end
 
@@ -72,7 +72,8 @@ module Begs
       # enable ssl because silly Net::HTTP won't do it for us
       h.use_ssl = (uri.scheme == 'https')
 
-      headers = { 'User-Agent' => 'be.gs/20110206 (be.gs url shortener; +http://be.gs)' }
+      # set UA and range headers
+      headers = { 'User-Agent' => 'be.gs/20110911 (be.gs url shortener; +http://be.gs)' }
       req = Net::HTTP::Get.new(uri.request_uri, headers)
       req.set_range 0, 2048
       resp = h.request req
@@ -98,7 +99,7 @@ module Begs
       i = 0
       power = 2
 
-      # this is scary, we could potentially loop for a very long time
+      # XXX: this is scary, we could potentially loop for a very long time
       key = gen_rand_key(power)
       while self.exists(key) do
         if i >= 20
