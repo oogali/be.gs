@@ -1,7 +1,11 @@
+source :rubygems
+gem 'SystemTimer'
+gem 'rake'
 gem 'sinatra'
 gem 'rack'
 gem 'thin'
 gem 'haml'
+gem 'sass'
 gem 'redis'
+gem 'iconv'
 gem 'json'
-gem 'rake'
