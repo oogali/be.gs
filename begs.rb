@@ -29,9 +29,15 @@ module Begs
     end
 
     def connect
-      @redis.quit unless !@redis rescue nil
+      @redis.quit unless not @redis rescue nil
 
-      @redis = Redis.new
+      @log.info @opts
+      if @opts[:redis] and @opts[:redis][:host]
+        @redis = Redis.new :host => @opts[:redis][:host]
+      else
+        @redis = Redis.new
+      end
+
       @log.info @opts.inspect
       if @opts[:redis] and @opts[:redis][:passwd]
         @redis.auth @opts[:redis][:passwd]
