@@ -1,0 +1,7 @@
+config.yml
+begs.yml
+*~
+*.log
+server.*.pid
+.*.swp
+.sass-cache/
